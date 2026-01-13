@@ -12,9 +12,9 @@ class UpdateService {
   factory UpdateService() => _instance;
   UpdateService._internal();
   
-  // GitHub 저장소 정보 - 실제 저장소로 변경하세요
-  static const String _owner = 'ybsoft';  // GitHub 사용자명
-  static const String _repo = 'GrowthClock';  // 저장소 이름
+  // GitHub 저장소 정보
+  static const String _owner = 'Thinkplus';  // GitHub 사용자명
+  static const String _repo = 'TimeTracker';  // 저장소 이름
   
   static const String _apiUrl = 'https://api.github.com/repos/$_owner/$_repo/releases/latest';
   static const String _skipVersionKey = 'skip_update_version';
