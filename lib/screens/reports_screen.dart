@@ -100,16 +100,31 @@ class _DailyReportState extends State<_DailyReport> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     
+    final startOfDay = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+    
+    // 캘린더 미연결 시 로컬 DB에서 로드
     if (!widget.calendarService.isSignedIn || _selectedCalendarId == null) {
+      final logs = await widget.dbService.getActivityLogsByDateRange(startOfDay, endOfDay);
+      final stats = <String, int>{};
+      final activities = <String>[];
+      
+      for (var log in logs) {
+        stats[log.category] = (stats[log.category] ?? 0) + log.durationMinutes;
+        activities.add('${log.category}: ${log.content}');
+      }
+      
+      if (!mounted) return;
       setState(() {
-        _stats = {};
-        _activities = [];
+        _stats = stats;
+        _activities = activities;
         _aiAnalysis = null;
         _isLoading = false;
       });
       return;
     }
     
+    // 캘린더 연결된 경우 캘린더에서 로드
     final events = await widget.calendarService.getEventsForDate(_selectedDate, _selectedCalendarId!);
     
     final stats = <String, int>{};
@@ -409,10 +424,24 @@ class _WeeklyReportState extends State<_WeeklyReport> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     
+    // 캘린더 미연결 시 로컬 DB에서 로드
     if (!widget.calendarService.isSignedIn || _selectedCalendarId == null) {
+      final logs = await widget.dbService.getActivityLogsByDateRange(
+        _startOfWeek, 
+        _endOfWeek.add(const Duration(days: 1)),
+      );
+      final stats = <String, int>{};
+      final activities = <String>[];
+      
+      for (var log in logs) {
+        stats[log.category] = (stats[log.category] ?? 0) + log.durationMinutes;
+        activities.add('${log.category}: ${log.content}');
+      }
+      
+      if (!mounted) return;
       setState(() {
-        _stats = {};
-        _activities = [];
+        _stats = stats;
+        _activities = activities;
         _aiAnalysis = null;
         _isLoading = false;
       });
@@ -696,10 +725,24 @@ class _MonthlyReportState extends State<_MonthlyReport> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     
+    // 캘린더 미연결 시 로컬 DB에서 로드
     if (!widget.calendarService.isSignedIn || _selectedCalendarId == null) {
+      final logs = await widget.dbService.getActivityLogsByDateRange(
+        _startOfMonth, 
+        _endOfMonth.add(const Duration(days: 1)),
+      );
+      final stats = <String, int>{};
+      final activities = <String>[];
+      
+      for (var log in logs) {
+        stats[log.category] = (stats[log.category] ?? 0) + log.durationMinutes;
+        activities.add('${log.category}: ${log.content}');
+      }
+      
+      if (!mounted) return;
       setState(() {
-        _stats = {};
-        _activities = [];
+        _stats = stats;
+        _activities = activities;
         _aiAnalysis = null;
         _isLoading = false;
       });
