@@ -51,14 +51,25 @@ class UpdateService {
         _releaseUrl = data['html_url'];
         _releaseNotes = data['body'] ?? '새로운 기능과 버그 수정이 포함되어 있습니다.';
         
-        // 다운로드 URL 파싱 (macOS용 .dmg 또는 .zip 파일 찾기)
+        // 다운로드 URL 파싱 (macOS용 - DMG 우선, 그 다음 ZIP)
         final assets = data['assets'] as List<dynamic>?;
         if (assets != null && assets.isNotEmpty) {
+          // 먼저 DMG 파일 찾기
           for (var asset in assets) {
             final name = asset['name'] as String? ?? '';
-            if (name.endsWith('.dmg') || name.endsWith('.zip') || name.contains('macos')) {
+            if (name.endsWith('.dmg')) {
               _downloadUrl = asset['browser_download_url'];
               break;
+            }
+          }
+          // DMG가 없으면 ZIP 파일 찾기
+          if (_downloadUrl == null) {
+            for (var asset in assets) {
+              final name = asset['name'] as String? ?? '';
+              if (name.endsWith('.zip') || name.contains('macos')) {
+                _downloadUrl = asset['browser_download_url'];
+                break;
+              }
             }
           }
         }
