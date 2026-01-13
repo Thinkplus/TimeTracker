@@ -46,13 +46,22 @@ class CalendarHomeScreenState extends State<CalendarHomeScreen> with WidgetsBind
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    // 앱이 resumed될 때 (알림 클릭 포함) 데이터 새로고침
+    // 앱이 resumed될 때 (알림 클릭 포함) 인증 갱신 후 데이터 새로고침
     if (state == AppLifecycleState.resumed) {
-      debugPrint('App resumed - refreshing data');
+      debugPrint('App resumed - refreshing auth and data');
       if (mounted) {
-        _loadCalendarEvents(); // 데이터 재로드
+        _refreshAndLoad();
       }
     }
+  }
+  
+  Future<void> _refreshAndLoad() async {
+    // 인증 상태 갱신 (토큰 갱신 포함)
+    if (_calendarService.isSignedIn) {
+      await _calendarService.refreshAuth();
+    }
+    // 데이터 로드
+    await _loadCalendarEvents();
   }
   
   Future<void> _cleanupAndInit() async {

@@ -90,18 +90,50 @@ class GoogleCalendarService {
     _calendarApi = null;
   }
   
-  // Calendar API 가져오기
-  Future<cal.CalendarApi?> _getCalendarApi() async {
-    if (_calendarApi != null) return _calendarApi;
+  // 인증 상태 새로고침 (앱 재활성화 시 호출)
+  Future<bool> refreshAuth() async {
+    if (!isConfigured) return false;
     
+    try {
+      // 기존 캐시된 API 무효화
+      _calendarApi = null;
+      
+      // 자동 로그인 재시도
+      final account = await _googleSignIn.signInSilently();
+      if (account != null) {
+        _currentUser = account;
+        final auth = await _googleSignIn.authenticatedClient();
+        if (auth != null) {
+          _calendarApi = cal.CalendarApi(auth);
+          print('Auth refreshed successfully');
+          return true;
+        }
+      }
+      print('Auth refresh failed - no account');
+      return false;
+    } catch (e) {
+      print('Auth refresh error: $e');
+      return false;
+    }
+  }
+  
+  // Calendar API 가져오기 (토큰 갱신 포함)
+  Future<cal.CalendarApi?> _getCalendarApi() async {
     if (_currentUser == null) {
       return null;
     }
     
-    final auth = await _googleSignIn.authenticatedClient();
-    if (auth != null) {
-      _calendarApi = cal.CalendarApi(auth);
-      return _calendarApi;
+    // 매번 새로운 인증 클라이언트 가져오기 (토큰 자동 갱신)
+    try {
+      final auth = await _googleSignIn.authenticatedClient();
+      if (auth != null) {
+        _calendarApi = cal.CalendarApi(auth);
+        return _calendarApi;
+      }
+    } catch (e) {
+      print('Failed to get authenticated client: $e');
+      // 인증 실패 시 재로그인 시도
+      _calendarApi = null;
     }
     
     return null;
