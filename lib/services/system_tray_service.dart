@@ -112,11 +112,22 @@ class SystemTrayService with TrayListener {
     try {
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
       
+      // macOS에서는 앱 번들 경로를 사용해야 함
+      String appPath = Platform.resolvedExecutable;
+      if (Platform.isMacOS) {
+        // /path/to/App.app/Contents/MacOS/AppName -> /path/to/App.app
+        final execPath = Platform.resolvedExecutable;
+        final contentsIndex = execPath.indexOf('/Contents/MacOS/');
+        if (contentsIndex != -1) {
+          appPath = execPath.substring(0, contentsIndex);
+        }
+      }
+      
       launchAtStartup.setup(
         appName: packageInfo.appName,
-        appPath: Platform.resolvedExecutable,
+        appPath: appPath,
       );
-      debugPrint("LaunchAtStartup: Setup complete for ${packageInfo.appName}");
+      debugPrint("LaunchAtStartup: Setup complete for ${packageInfo.appName} at $appPath");
     } catch (e) {
       debugPrint("LaunchAtStartup: Setup failed: $e");
     }

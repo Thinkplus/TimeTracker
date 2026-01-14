@@ -258,11 +258,34 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
             subtitle: const Text('컴퓨터 시작 시 앱 자동 실행'),
             value: _isLaunchAtStartup,
             onChanged: (value) async {
-              setState(() => _isLaunchAtStartup = value);
-              if (value) {
-                await launchAtStartup.enable();
-              } else {
-                await launchAtStartup.disable();
+              try {
+                if (value) {
+                  await launchAtStartup.enable();
+                } else {
+                  await launchAtStartup.disable();
+                }
+                // 실제 상태 확인
+                final actualState = await launchAtStartup.isEnabled();
+                setState(() => _isLaunchAtStartup = actualState);
+                
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(actualState ? '자동 실행이 활성화되었습니다' : '자동 실행이 비활성화되었습니다'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                debugPrint('LaunchAtStartup error: $e');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('자동 실행 설정 실패: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               }
             },
           ),
