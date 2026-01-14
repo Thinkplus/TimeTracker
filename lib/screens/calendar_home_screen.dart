@@ -905,21 +905,46 @@ class CalendarHomeScreenState extends State<CalendarHomeScreen> with WidgetsBind
           ),
           
           // 캘린더 연동 상태
-          if (!_calendarService.isSignedIn)
+          if (!_calendarService.isSignedIn || _selectedCalendarId == null)
             Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               padding: const EdgeInsets.all(16),
-              color: Colors.orange.shade100,
-              child: Row(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.orange.shade50, Colors.amber.shade50],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: Column(
                 children: [
-                  const Icon(Icons.info_outline, color: Colors.orange),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Google Calendar에 로그인하면 일정을 확인할 수 있습니다.',
-                      style: TextStyle(color: Colors.orange.shade900),
+                  Icon(Icons.cloud_off, size: 40, color: Colors.orange.shade700),
+                  const SizedBox(height: 8),
+                  Text(
+                    !_calendarService.isSignedIn 
+                        ? 'Google 캘린더 로그인 필요'
+                        : '캘린더를 선택해주세요',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange.shade800,
                     ),
                   ),
-                  TextButton(
+                  const SizedBox(height: 4),
+                  Text(
+                    !_calendarService.isSignedIn 
+                        ? '활동 기록을 위해 Google 캘린더에 로그인해주세요.'
+                        : '활동을 저장할 캘린더를 선택해주세요.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
                     onPressed: () async {
                       await Navigator.push(
                         context,
@@ -928,7 +953,15 @@ class CalendarHomeScreenState extends State<CalendarHomeScreen> with WidgetsBind
                       _loadSettings();
                       _loadCalendarEvents();
                     },
-                    child: const Text('설정'),
+                    icon: const Icon(Icons.settings, size: 18),
+                    label: const Text('설정으로 이동'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange.shade600,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                   ),
                 ],
               ),

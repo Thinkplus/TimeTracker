@@ -100,24 +100,12 @@ class _DailyReportState extends State<_DailyReport> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     
-    final startOfDay = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
-    
-    // 캘린더 미연결 시 로컬 DB에서 로드
+    // 캘린더 미연결 시 빈 데이터 설정
     if (!widget.calendarService.isSignedIn || _selectedCalendarId == null) {
-      final logs = await widget.dbService.getActivityLogsByDateRange(startOfDay, endOfDay);
-      final stats = <String, int>{};
-      final activities = <String>[];
-      
-      for (var log in logs) {
-        stats[log.category] = (stats[log.category] ?? 0) + log.durationMinutes;
-        activities.add('${log.category}: ${log.content}');
-      }
-      
       if (!mounted) return;
       setState(() {
-        _stats = stats;
-        _activities = activities;
+        _stats = {};
+        _activities = [];
         _aiAnalysis = null;
         _isLoading = false;
       });
@@ -424,24 +412,12 @@ class _WeeklyReportState extends State<_WeeklyReport> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     
-    // 캘린더 미연결 시 로컬 DB에서 로드
+    // 캘린더 미연결 시 빈 데이터 설정
     if (!widget.calendarService.isSignedIn || _selectedCalendarId == null) {
-      final logs = await widget.dbService.getActivityLogsByDateRange(
-        _startOfWeek, 
-        _endOfWeek.add(const Duration(days: 1)),
-      );
-      final stats = <String, int>{};
-      final activities = <String>[];
-      
-      for (var log in logs) {
-        stats[log.category] = (stats[log.category] ?? 0) + log.durationMinutes;
-        activities.add('${log.category}: ${log.content}');
-      }
-      
       if (!mounted) return;
       setState(() {
-        _stats = stats;
-        _activities = activities;
+        _stats = {};
+        _activities = [];
         _aiAnalysis = null;
         _isLoading = false;
       });
@@ -725,24 +701,12 @@ class _MonthlyReportState extends State<_MonthlyReport> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     
-    // 캘린더 미연결 시 로컬 DB에서 로드
+    // 캘린더 미연결 시 빈 데이터 설정
     if (!widget.calendarService.isSignedIn || _selectedCalendarId == null) {
-      final logs = await widget.dbService.getActivityLogsByDateRange(
-        _startOfMonth, 
-        _endOfMonth.add(const Duration(days: 1)),
-      );
-      final stats = <String, int>{};
-      final activities = <String>[];
-      
-      for (var log in logs) {
-        stats[log.category] = (stats[log.category] ?? 0) + log.durationMinutes;
-        activities.add('${log.category}: ${log.content}');
-      }
-      
       if (!mounted) return;
       setState(() {
-        _stats = stats;
-        _activities = activities;
+        _stats = {};
+        _activities = [];
         _aiAnalysis = null;
         _isLoading = false;
       });
@@ -1023,18 +987,46 @@ Widget _buildDateSelector({
 Widget _buildLoginPrompt() {
   return Container(
     margin: const EdgeInsets.all(16),
-    padding: const EdgeInsets.all(16),
+    padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: Colors.orange.shade50,
-      borderRadius: BorderRadius.circular(12),
+      gradient: LinearGradient(
+        colors: [Colors.orange.shade50, Colors.amber.shade50],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(16),
       border: Border.all(color: Colors.orange.shade200),
     ),
-    child: Row(
+    child: Column(
       children: [
-        Icon(Icons.info_outline, color: Colors.orange.shade700),
-        const SizedBox(width: 12),
-        const Expanded(
-          child: Text('Google 캘린더에 로그인하면 데이터를 확인할 수 있습니다.'),
+        Icon(Icons.cloud_off, size: 48, color: Colors.orange.shade700),
+        const SizedBox(height: 12),
+        Text(
+          'Google 캘린더 연결 필요',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.orange.shade800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '활동 기록과 분석 리포트를 확인하려면\nGoogle 캘린더에 로그인하고 캘린더를 선택해주세요.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey.shade700,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          '설정 > Google 캘린더에서 연결할 수 있습니다.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Colors.orange.shade700,
+          ),
         ),
       ],
     ),
