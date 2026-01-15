@@ -98,25 +98,6 @@ TimeTracker는 Google Calendar API를 사용합니다. 다음 단계를 따라 �
 
 ### 설치 및 실행
 
-#### macOS 다운로드 설치 (GitHub Releases)
-
-1. [Releases](https://github.com/Thinkplus/TimeTracker/releases) 페이지에서 최신 버전 다운로드
-2. ZIP 파일 압축 해제
-3. `Growth Clock.app`을 **Applications** 폴더로 이동
-4. **⚠️ 처음 실행 시 보안 경고 해결:**
-
-   **방법 1: 우클릭으로 열기**
-   - 앱을 **Control + 클릭** (또는 우클릭)
-   - **"열기"** 선택
-   - 경고 다이얼로그에서 **"열기"** 버튼 클릭
-
-   **방법 2: 터미널 명령 사용**
-   ```bash
-   xattr -cr /Applications/Growth\ Clock.app
-   ```
-
-#### 소스에서 빌드
-
 1. 의존성 설치:
    ```bash
    flutter pub get
