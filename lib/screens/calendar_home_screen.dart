@@ -182,6 +182,7 @@ class CalendarHomeScreenState extends State<CalendarHomeScreen> with WidgetsBind
     DateTime? eventStartTime,
     String? eventTitle,
     String? eventDescription,
+    bool isNewRecord = true,  // 새 기록인지 기존 기록 편집인지 구분
   }) async {
     final now = DateTime.now();
     DateTime currentEndTime;
@@ -199,10 +200,14 @@ class CalendarHomeScreenState extends State<CalendarHomeScreen> with WidgetsBind
       currentStartTime = currentEndTime.subtract(Duration(minutes: _intervalMinutes));
     }
     
-    ActivityLog? existingLog = await _dbService.getActivityLogInTimeRange(
-      currentStartTime,
-      currentEndTime,
-    );
+    // 새 기록일 때는 기존 로그를 불러오지 않음
+    ActivityLog? existingLog;
+    if (!isNewRecord) {
+      existingLog = await _dbService.getActivityLogInTimeRange(
+        currentStartTime,
+        currentEndTime,
+      );
+    }
     
     String? categoryFromEvent;
     if (eventTitle != null) {
@@ -1086,6 +1091,7 @@ class CalendarHomeScreenState extends State<CalendarHomeScreen> with WidgetsBind
                                         eventStartTime: eventStartTime,
                                         eventTitle: event.summary,
                                         eventDescription: event.description,
+                                        isNewRecord: false,  // 기존 이벤트 편집
                                       );
                                     }
                                   },
