@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:launch_at_startup/launch_at_startup.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'dart:io';
 import 'package:intl/date_symbol_data_local.dart';
 import 'screens/splash_screen.dart';
@@ -14,6 +16,13 @@ void main() async {
   // Desktop 설정
   if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
     await windowManager.ensureInitialized();
+    
+    // Launch at startup 초기화
+    final packageInfo = await PackageInfo.fromPlatform();
+    launchAtStartup.setup(
+      appName: packageInfo.appName,
+      appPath: Platform.resolvedExecutable,
+    );
     
     const Size minimumSize = Size(430, 932);
     

@@ -28,6 +28,8 @@ class CalendarHomeScreenState extends State<CalendarHomeScreen> with WidgetsBind
   Timer? _timer;
   int _intervalMinutes = 60;
   DateTime? _lastReminderTime;
+  DateTime? _lastEventEndTime; // 마지막 등록된 일정의 종료 시간
+  bool _hasNotifiedForCurrentPeriod = false; // 현재 기간에 이미 알림을 보냈는지 여부
   DateTime _selectedDate = DateTime.now();
   
   List<cal.Event> _calendarEvents = [];
@@ -116,6 +118,14 @@ class CalendarHomeScreenState extends State<CalendarHomeScreen> with WidgetsBind
         _calendarEvents = events;
         _isLoadingEvents = false;
       });
+      
+      // 오늘 날짜일 경우 마지막 이벤트 종료 시간 계산
+      final now = DateTime.now();
+      if (_selectedDate.year == now.year &&
+          _selectedDate.month == now.month &&
+          _selectedDate.day == now.day) {
+        _calculateLastEventEndTimeFromEvents();
+      }
     } catch (e) {
       print('Error loading calendar events: $e');
       if (mounted) {
@@ -139,9 +149,74 @@ class CalendarHomeScreenState extends State<CalendarHomeScreen> with WidgetsBind
   
   void _startTimer() {
     _timer?.cancel();
-    _timer = Timer.periodic(Duration(minutes: _intervalMinutes), (timer) {
-      _triggerReminder();
+    // 1분마다 체크하여 마지막 이벤트 종료 시간 기준으로 알림 간격 초과 시 알림
+    _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      _checkAndTriggerReminder();
     });
+  }
+  
+  /// 마지막 등록된 일정 종료 시간 기준으로 알림 여부를 체크
+  void _checkAndTriggerReminder() {
+    if (_lastEventEndTime == null) {
+      // 마지막 이벤트가 없으면 알림하지 않음
+      return;
+    }
+    
+    final now = DateTime.now();
+    final timeSinceLastEvent = now.difference(_lastEventEndTime!);
+    
+    // 설정된 알림 간격을 초과했는지 확인
+    if (timeSinceLastEvent.inMinutes >= _intervalMinutes) {
+      // 이미 이 기간에 알림을 보냈는지 확인
+      if (!_hasNotifiedForCurrentPeriod) {
+        _triggerReminder();
+        _hasNotifiedForCurrentPeriod = true;
+      }
+    } else {
+      // 아직 알림 간격에 도달하지 않았으므로 다음 기간을 위해 플래그 초기화
+      _hasNotifiedForCurrentPeriod = false;
+    }
+  }
+  
+  /// 마지막 등록된 일정의 종료 시간을 업데이트
+  void _updateLastEventEndTime(DateTime endTime) {
+    // 오늘 날짜의 이벤트만 고려
+    final today = DateTime.now();
+    if (endTime.year == today.year && 
+        endTime.month == today.month && 
+        endTime.day == today.day) {
+      if (_lastEventEndTime == null || endTime.isAfter(_lastEventEndTime!)) {
+        _lastEventEndTime = endTime;
+        _hasNotifiedForCurrentPeriod = false; // 새 이벤트가 등록되면 알림 플래그 초기화
+        debugPrint('Updated lastEventEndTime: $_lastEventEndTime');
+      }
+    }
+  }
+  
+  /// 캘린더 이벤트에서 마지막 종료 시간 계산
+  void _calculateLastEventEndTimeFromEvents() {
+    final today = DateTime.now();
+    DateTime? latestEndTime;
+    
+    for (final event in _calendarEvents) {
+      final endDateTime = event.end?.dateTime?.toLocal();
+      if (endDateTime != null) {
+        // 오늘 날짜의 이벤트만 고려하고, 현재 시간 이전의 이벤트만 고려
+        if (endDateTime.year == today.year &&
+            endDateTime.month == today.month &&
+            endDateTime.day == today.day &&
+            endDateTime.isBefore(today)) {
+          if (latestEndTime == null || endDateTime.isAfter(latestEndTime)) {
+            latestEndTime = endDateTime;
+          }
+        }
+      }
+    }
+    
+    if (latestEndTime != null) {
+      _lastEventEndTime = latestEndTime;
+      debugPrint('Calculated lastEventEndTime from events: $_lastEventEndTime');
+    }
   }
   
   Future<void> _triggerReminder() async {
@@ -723,6 +798,8 @@ class CalendarHomeScreenState extends State<CalendarHomeScreen> with WidgetsBind
                                 log.googleEventId = existingEventId;
                                 log.syncedToCalendar = true;
                                 await _dbService.saveActivityLog(log);
+                                // 이벤트 업데이트 시 마지막 이벤트 종료 시간 업데이트
+                                _updateLastEventEndTime(currentEndTime);
                               }
                             } else {
                               final eventId = await _calendarService.createEventWithCustomFormat(
@@ -732,6 +809,8 @@ class CalendarHomeScreenState extends State<CalendarHomeScreen> with WidgetsBind
                               if (eventId != null) {
                                 log.googleEventId = eventId;
                                 log.syncedToCalendar = true;
+                                // 새 이벤트 등록 시 마지막 이벤트 종료 시간 업데이트
+                                _updateLastEventEndTime(currentEndTime);
                                 await _dbService.saveActivityLog(log);
                               }
                             }
